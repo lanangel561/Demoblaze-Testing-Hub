@@ -1,0 +1,39 @@
+name: Automation Command Center
+
+# أولاً: تحديد متى يعمل المحرك
+on:
+  push:
+    branches: [ main ] # يعمل تلقائياً عند رفع كود جديد
+  workflow_dispatch:   # هذا السطر يسمح لتطبيق الـ React بالتحكم وتشغيل الاختبار يدوياً
+    inputs:
+      triggered_by:
+        description: 'الجهة المرسلة للأمر'
+        required: false
+        default: 'React Dashboard'
+
+# ثانياً: الخطوات التقنية التي سيقوم بها السيرفر الافتراضي
+jobs:
+  automation-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4 # سحب الكود من المستودع
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4 # تثبيت الجافا 25
+        with:
+          java-version: '25'
+          distribution: 'oracle'
+          cache: maven
+
+      - name: Run Selenium Tests
+        run: mvn test # تشغيل كود الجافا (MyStepDefinitions)
+        continue-on-error: true # لضمان استمرار العمل حتى لو فشل اختبار واحد
+
+      - name: Save Test Results
+        if: always() # تنفيذ هذه الخطوة دائماً لحفظ النتائج
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-reports
+          path: target/cucumber-reports/ # المكان الذي يحفظ فيه الجافا تقارير النجاح والفشل
